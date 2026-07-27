@@ -1,1 +1,1176 @@
-# khayam-samosa
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Khayam Samosa — Order Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C140F;
+    --paper:#F6F1E7;
+    --card:#FFFFFF;
+    --turmeric:#B78A3D;
+    --turmeric-deep:#8F6B27;
+    --turmeric-light:#E4CFA0;
+    --brick:#6E2A2A;
+    --brick-deep:#4E1D1D;
+    --chutney:#35513A;
+    --line:rgba(34,27,21,.15);
+    --muted:#6B5D4E;
+    --charcoal:#14100C;
+    --charcoal-2:#1E1812;
+    --shadow-sm:0 2px 8px rgba(34,27,21,.06);
+    --shadow-card:0 6px 20px rgba(110,42,42,.09), 0 1px 3px rgba(34,27,21,.06);
+    --shadow-lift:0 16px 36px rgba(110,42,42,.16), 0 3px 8px rgba(34,27,21,.08);
+    --shadow-glow:0 8px 28px rgba(183,138,61,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, rgba(183,138,61,.09) 1.4px, transparent 0) 0 0/26px 26px,
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    margin:0;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
+  }
+  ::selection{background:var(--turmeric);color:var(--charcoal);}
+  :focus-visible{outline:3px solid var(--brick);outline-offset:2px;}
+
+  /* ---------- Layout shells ---------- */
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  @media (max-width:640px){.wrap{padding:0 16px;}}
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:40;
+    background:rgba(251,241,225,.86);
+    backdrop-filter:blur(10px) saturate(1.2);
+    -webkit-backdrop-filter:blur(10px) saturate(1.2);
+    border-bottom:1px solid var(--line);
+    transition:box-shadow .25s ease;
+  }
+  .topbar.scrolled{box-shadow:0 6px 20px rgba(34,27,21,.06);}
+  .topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 0;}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;background:none;border:none;padding:0;}
+  .brand-mark{width:36px;height:36px;flex-shrink:0;filter:drop-shadow(0 3px 6px rgba(183,138,61,.4));transition:transform .3s cubic-bezier(.2,.8,.3,1.4);}
+  .brand:hover .brand-mark{transform:rotate(-8deg) scale(1.06);}
+  .brand-name{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:21px;color:var(--ink);line-height:1;}
+  .brand-sub{display:block;font-family:'Inter';font-weight:600;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--brick);margin-top:3px;}
+  .nav{display:flex;align-items:center;gap:6px;}
+  .nav-link{
+    position:relative;background:none;border:none;padding:10px 14px;border-radius:999px;
+    font-size:14.5px;font-weight:500;color:var(--ink);transition:background .2s ease, color .2s ease;
+  }
+  .nav-link:hover{background:rgba(110,42,42,.08);}
+  .nav-link.active{background:var(--ink);color:var(--paper);}
+  .cart-btn{
+    position:relative;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);
+    border-radius:999px;padding:10px 18px;font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow-sm);transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .cart-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-card);}
+  .cart-badge{
+    background:var(--turmeric);color:var(--charcoal);font-weight:700;font-size:12px;
+    min-width:20px;height:20px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;
+    animation:pop .35s cubic-bezier(.3,1.5,.4,1);
+  }
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.25);}100%{transform:scale(1);}}
+  .hamburger{display:none;border:1.5px solid var(--ink);background:none;border-radius:10px;width:40px;height:40px;align-items:center;justify-content:center;}
+  @media (max-width:760px){
+    .nav-links-desktop{display:none;}
+    .hamburger{display:flex;}
+  }
+  .mobile-menu{display:none;flex-direction:column;gap:4px;padding:10px 0 16px;border-top:1px solid var(--line);}
+  .mobile-menu.open{display:flex;}
+  .mobile-menu button{text-align:left;padding:12px 6px;background:none;border:none;font-size:15px;font-weight:500;border-bottom:1px solid var(--line);}
+
+  /* ---------- Ramzan banner ---------- */
+  .ramzan-banner{
+    background:linear-gradient(90deg,var(--chutney),#24391F);
+    color:#F3F0E4;text-align:center;padding:10px 16px;font-size:13.5px;font-weight:500;letter-spacing:.01em;
+    position:relative;overflow:hidden;
+  }
+  .ramzan-banner::before{
+    content:"✦"; position:absolute; left:10%; opacity:.25; font-size:12px; top:50%; transform:translateY(-50%);
+  }
+  .ramzan-banner::after{
+    content:"✦"; position:absolute; right:10%; opacity:.25; font-size:12px; top:50%; transform:translateY(-50%);
+  }
+  .ramzan-banner b{font-weight:700;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:64px 0 40px;position:relative;overflow:hidden;}
+  .hero::before{
+    content:"";position:absolute;top:-120px;right:-120px;width:420px;height:420px;border-radius:50%;
+    background:radial-gradient(circle, rgba(183,138,61,.28), transparent 70%);pointer-events:none;
+  }
+  .hero-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center;position:relative;}
+  @media (max-width:860px){.hero-grid{grid-template-columns:1fr;gap:28px;}}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--brick);margin-bottom:18px;background:rgba(110,42,42,.09);padding:7px 14px 7px 10px;border-radius:999px;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--brick);border-radius:50%;display:inline-block;box-shadow:0 0 0 4px rgba(110,42,42,.15);}
+  .hero h1{font-size:clamp(36px,5.6vw,60px);line-height:1.03;color:var(--ink);}
+  .hero h1 em{font-style:normal;font-weight:800;background:linear-gradient(100deg,var(--brick),var(--turmeric-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .hero p{font-size:17.5px;line-height:1.6;color:var(--muted);max-width:46ch;margin:20px 0 28px;}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{
+    position:relative;border-radius:999px;padding:14px 26px;font-weight:600;font-size:15px;border:1.5px solid transparent;
+    display:inline-flex;align-items:center;gap:8px;transition:transform .18s cubic-bezier(.2,.8,.3,1.2), box-shadow .18s ease;
+  }
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:var(--brick);color:#F6F1E7;box-shadow:0 10px 24px rgba(110,42,42,.32);}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(110,42,42,.4);}
+  .btn-ghost{background:transparent;border-color:var(--ink);color:var(--ink);}
+  .btn-ghost:hover{background:var(--ink);color:var(--paper);transform:translateY(-3px);}
+  .hero-art{
+    aspect-ratio:1/1;max-width:400px;margin:0 auto;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    animation:float 5s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+  .fresh-chip{
+    position:absolute;top:8%;right:2%;background:var(--card);border:1.5px solid var(--line);border-radius:16px;
+    padding:10px 16px;box-shadow:var(--shadow-lift);font-size:12.5px;font-weight:700;color:var(--ink);
+    display:flex;align-items:center;gap:8px;transform:rotate(4deg);
+  }
+  .fresh-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--chutney);box-shadow:0 0 0 3px rgba(53,81,58,.18);}
+  .steam{opacity:.55;}
+  .steam path{animation:steam 3s ease-in-out infinite;}
+  .steam path:nth-child(2){animation-delay:.4s;}
+  .steam path:nth-child(3){animation-delay:.8s;}
+  @keyframes steam{
+    0%{opacity:0;transform:translateY(6px);}
+    30%{opacity:.7;}
+    100%{opacity:0;transform:translateY(-18px);}
+  }
+
+  /* ---------- Section headers ---------- */
+  .section{padding:40px 0;}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+  .section-head h2{font-size:clamp(24px,3.2vw,32px);position:relative;display:inline-block;}
+  .section-head h2::after{
+    content:"";position:absolute;left:0;bottom:-8px;width:46px;height:3px;border-radius:3px;
+    background:linear-gradient(90deg,var(--brick),var(--turmeric));
+  }
+  .section-head p{color:var(--muted);font-size:14.5px;margin:10px 0 0;}
+
+  /* ---------- Category tabs ---------- */
+  .cat-tabs{display:flex;gap:9px;overflow-x:auto;padding:4px 4px 8px;-ms-overflow-style:none;scrollbar-width:none;}
+  .cat-tabs::-webkit-scrollbar{display:none;}
+  .cat-tab{
+    flex-shrink:0;background:var(--card);border:1.5px solid var(--line);border-radius:999px;
+    padding:9px 18px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap;
+    transition:all .2s ease;box-shadow:var(--shadow-sm);
+  }
+  .cat-tab:hover{border-color:var(--brick);color:var(--brick);}
+  .cat-tab.active{background:var(--ink);border-color:var(--ink);color:var(--paper);box-shadow:0 6px 16px rgba(34,27,21,.25);}
+
+  /* ---------- Menu grid & cards (signature: folded corner) ---------- */
+  .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;margin-top:22px;}
+  .menu-card{
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:22px 20px 20px;display:flex;flex-direction:column;gap:10px;overflow:hidden;
+    box-shadow:var(--shadow-card);transition:transform .25s cubic-bezier(.2,.8,.3,1), box-shadow .25s ease, border-color .25s ease;
+  }
+  .menu-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lift);border-color:rgba(110,42,42,.25);}
+  .menu-card::before{
+    content:"";position:absolute;top:0;right:0;
+    border-width:0 26px 26px 0;border-style:solid;
+    border-color:transparent var(--turmeric) transparent transparent;
+    transition:border-width .25s ease;
+    filter:drop-shadow(-2px 2px 3px rgba(34,27,21,.12));
+  }
+  .menu-card:hover::before{border-width:0 32px 32px 0;}
+  .menu-card .cat-chip{
+    align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--brick);background:rgba(110,42,42,.08);padding:3px 10px;border-radius:999px;
+  }
+  .menu-card h3{font-size:19.5px;color:var(--ink);}
+  .menu-card .desc{font-size:13.5px;color:var(--muted);line-height:1.5;min-height:38px;}
+  .menu-card .row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);}
+  .price{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:16.5px;color:var(--ink);}
+  .add-btn{
+    background:var(--ink);color:var(--paper);border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;
+    transition:transform .18s ease, background .18s ease;
+  }
+  .add-btn:hover{background:var(--brick);transform:translateY(-2px);}
+  .qty-stepper{display:flex;align-items:center;gap:10px;background:var(--paper);border-radius:999px;padding:5px 7px;border:1px solid var(--line);}
+  .qty-stepper button{background:none;border:none;width:24px;height:24px;font-size:16px;font-weight:700;color:var(--ink);border-radius:50%;transition:background .15s ease, transform .15s ease;}
+  .qty-stepper button:hover{background:var(--turmeric);transform:scale(1.08);}
+  .qty-stepper span{font-family:'IBM Plex Mono';font-weight:600;min-width:14px;text-align:center;font-size:14px;}
+  .empty-note{color:var(--muted);font-size:14px;padding:36px 0;text-align:center;}
+
+  /* ---------- Cart drawer ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(26,21,18,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s ease;}
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:420px;max-width:92vw;background:var(--paper);z-index:61;
+    box-shadow:-16px 0 48px rgba(34,27,21,.22);transform:translateX(100%);transition:transform .32s cubic-bezier(.2,.8,.25,1);
+    display:flex;flex-direction:column;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:22px;border-bottom:1px solid var(--line);}
+  .drawer-head h3{font-size:21px;}
+  .icon-btn{background:none;border:none;font-size:20px;width:36px;height:36px;border-radius:50%;transition:background .15s ease, transform .15s ease;}
+  .icon-btn:hover{background:rgba(34,27,21,.08);transform:rotate(90deg);}
+  .drawer-body{flex:1;overflow-y:auto;padding:16px 22px;}
+  .cart-item{display:flex;gap:12px;padding:16px 0;border-bottom:1px dashed var(--line);}
+  .cart-item .info{flex:1;}
+  .cart-item h4{font-size:15px;font-weight:600;margin:0 0 4px;}
+  .cart-item .price{font-size:13.5px;color:var(--muted);}
+  .cart-item .remove{background:none;border:none;color:var(--brick);font-size:12.5px;font-weight:600;padding:0;margin-top:6px;text-decoration:underline;}
+  .drawer-foot{padding:20px 22px 24px;border-top:1px solid var(--line);background:var(--card);}
+  .subtotal-row{display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin-bottom:16px;}
+  .full-btn{width:100%;text-align:center;justify-content:center;}
+
+  /* ---------- Forms ---------- */
+  .form-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;max-width:560px;box-shadow:var(--shadow-card);}
+  .field{margin-bottom:17px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+  .field input,.field textarea,.field select{
+    width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);
+    font-family:inherit;font-size:14.5px;color:var(--ink);transition:border-color .18s ease, box-shadow .18s ease;
+  }
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--brick);box-shadow:0 0 0 3px rgba(110,42,42,.12);outline:none;}
+  .field textarea{resize:vertical;min-height:70px;}
+  .field .error{color:var(--brick);font-size:12.5px;margin-top:5px;}
+  .type-toggle{display:flex;gap:10px;}
+  .type-toggle button{
+    flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-weight:600;font-size:14px;color:var(--muted);transition:all .18s ease;
+  }
+  .type-toggle button.active{background:var(--ink);color:var(--paper);border-color:var(--ink);box-shadow:0 6px 14px rgba(34,27,21,.22);}
+  .order-summary-line{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;color:var(--muted);}
+  .order-summary-line.total{color:var(--ink);font-weight:700;font-size:16.5px;border-top:1px solid var(--line);padding-top:12px;margin-top:8px;}
+
+  /* ---------- Ticket (confirmation + admin orders) ---------- */
+  .ticket{
+    position:relative;background:var(--card);border:1.5px dashed rgba(34,27,21,.28);border-radius:12px;
+    padding:22px;margin:12px 0;box-shadow:var(--shadow-card);
+  }
+  .ticket::before,.ticket::after{
+    content:"";position:absolute;top:50%;transform:translateY(-50%);width:22px;height:22px;
+    background:var(--paper);border-radius:50%;box-shadow:inset -2px 0 4px rgba(34,27,21,.08);
+  }
+  .ticket::before{left:-12px;}
+  .ticket::after{right:-12px;box-shadow:inset 2px 0 4px rgba(34,27,21,.08);}
+  .ticket-num{font-family:'IBM Plex Mono';font-size:23px;font-weight:600;letter-spacing:.02em;color:var(--brick);}
+  .status-pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    padding:5px 12px;border-radius:999px;box-shadow:0 2px 6px rgba(34,27,21,.08);
+  }
+  .status-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .status-pending{background:#F1E2C4;color:#8F6B27;}
+  .status-preparing{background:#E6D9F0;color:#5B3A8A;}
+  .status-ready{background:#D9E6DB;color:#35513A;}
+  .status-completed{background:#D6E7DE;color:var(--chutney);}
+  .status-cancelled{background:#F2D8D3;color:var(--brick);}
+
+  /* ---------- Confirmation / track screens ---------- */
+  .center-screen{padding:60px 0;display:flex;justify-content:center;}
+  .center-card{max-width:480px;width:100%;text-align:center;}
+  .big-check{width:56px;height:56px;margin:0 auto 18px;}
+
+  /* ---------- Footer ---------- */
+  .site-footer{margin-top:auto;background:var(--charcoal);color:#D8CBB8;padding:44px 0 26px;position:relative;}
+  .site-footer::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brick),var(--turmeric),var(--chutney));}
+  .footer-grid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+  .footer-grid h4{color:#fff;font-size:16px;margin-bottom:8px;}
+  .footer-grid p, .footer-grid a{font-size:13.5px;color:#B8A891;line-height:1.7;text-decoration:none;}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,.1);margin-top:28px;padding-top:18px;font-size:12px;color:#9C8A6E;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .admin-link{background:none;border:none;color:#9C8A6E;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
+
+  /* ================= ADMIN (dark, back-of-house theme) ================= */
+  .admin-shell{min-height:100vh;background:var(--charcoal);color:#EDE3D3;display:flex;}
+  .admin-sidebar{
+    width:230px;flex-shrink:0;background:var(--charcoal-2);border-right:1px solid rgba(255,255,255,.06);
+    padding:24px 16px;display:flex;flex-direction:column;gap:6px;
+  }
+  .admin-sidebar .brand-name{color:#fff;}
+  .admin-sidebar .brand-sub{color:#9C8A6E;}
+  .admin-nav-item{
+    background:none;border:none;text-align:left;padding:11px 14px;border-radius:10px;color:#B8A891;font-size:14px;font-weight:500;
+    display:flex;align-items:center;gap:10px;
+  }
+  .admin-nav-item:hover{background:rgba(255,255,255,.05);}
+  .admin-nav-item.active{background:var(--turmeric);color:var(--charcoal);font-weight:700;}
+  .admin-main{flex:1;min-width:0;padding:30px 36px;}
+  @media (max-width:880px){
+    .admin-shell{flex-direction:column;}
+    .admin-sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px 16px;align-items:center;}
+    .admin-sidebar .brand{margin-right:12px;}
+    .admin-nav-item{white-space:nowrap;}
+    .admin-main{padding:22px 18px;}
+  }
+  .admin-topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:12px;}
+  .admin-topline h2{color:#fff;font-size:26px;}
+  .logout-btn{background:none;border:1px solid rgba(255,255,255,.2);color:#EDE3D3;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+  .stat-card{position:relative;background:var(--charcoal-2);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px;overflow:hidden;transition:transform .2s ease;}
+  .stat-card:hover{transform:translateY(-3px);}
+  .stat-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--turmeric),transparent);}
+  .stat-card .label{font-size:12px;color:#9C8A6E;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .stat-card .value{font-family:'IBM Plex Mono';font-size:27px;font-weight:600;color:var(--turmeric);margin-top:6px;text-shadow:0 0 20px rgba(183,138,61,.3);}
+
+  .status-filters{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;}
+  .status-filters button{
+    flex-shrink:0;background:var(--charcoal-2);border:1px solid rgba(255,255,255,.1);color:#B8A891;border-radius:999px;
+    padding:8px 16px;font-size:13px;font-weight:600;
+  }
+  .status-filters button.active{background:var(--turmeric);color:var(--charcoal);border-color:var(--turmeric);}
+
+  .order-card{
+    position:relative;background:var(--charcoal-2);border:1px solid rgba(255,255,255,.08);border-radius:14px;
+    padding:18px 20px;margin-bottom:14px;transition:border-color .2s ease, transform .2s ease;
+  }
+  .order-card:hover{border-color:rgba(183,138,61,.35);transform:translateY(-2px);}
+  .order-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .order-card .ticket-num{color:var(--turmeric);}
+  .order-card .meta{font-size:12.5px;color:#9C8A6E;margin-top:4px;}
+  .order-items-list{margin:12px 0;font-size:13.5px;color:#D8CBB8;}
+  .order-items-list div{display:flex;justify-content:space-between;padding:3px 0;}
+  .order-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .status-btn{
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#EDE3D3;border-radius:8px;
+    padding:7px 13px;font-size:12.5px;font-weight:600;
+  }
+  .status-btn:hover{background:rgba(255,255,255,.12);}
+  .status-btn.danger{color:#E8998C;}
+
+  .admin-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .admin-table th{text-align:left;color:#9C8A6E;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);}
+  .admin-table td{padding:12px;border-bottom:1px solid rgba(255,255,255,.06);}
+  .admin-table input, .admin-table select{
+    background:var(--charcoal);border:1px solid rgba(255,255,255,.15);color:#EDE3D3;border-radius:6px;padding:6px 8px;font-size:13px;width:100%;
+  }
+  .table-scroll{overflow-x:auto;}
+  .toggle-pill{
+    border:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;
+  }
+  .toggle-on{background:var(--chutney);color:#fff;}
+  .toggle-off{background:rgba(255,255,255,.1);color:#9C8A6E;}
+  .del-btn{background:none;border:none;color:#E8998C;font-weight:700;font-size:13px;}
+  .admin-form-row{display:grid;grid-template-columns:1.4fr 1fr .8fr 1fr auto;gap:10px;align-items:end;margin-bottom:22px;background:var(--charcoal-2);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.08);}
+  @media (max-width:760px){.admin-form-row{grid-template-columns:1fr 1fr;}}
+  .admin-form-row label{font-size:11px;color:#9C8A6E;display:block;margin-bottom:4px;}
+  .add-product-btn{background:var(--turmeric);color:var(--charcoal);border:none;border-radius:8px;padding:10px;font-weight:700;font-size:13px;}
+
+  .login-shell{min-height:100vh;background:var(--charcoal);display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:var(--charcoal-2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:36px 32px;max-width:380px;width:100%;text-align:center;}
+  .login-card h2{color:#fff;margin-bottom:6px;}
+  .login-card p{color:#9C8A6E;font-size:13.5px;margin-bottom:22px;}
+  .login-card input{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.15);background:var(--charcoal);color:#EDE3D3;font-size:15px;text-align:center;letter-spacing:.1em;margin-bottom:12px;}
+  .login-card .btn-primary{width:100%;justify-content:center;}
+  .back-link{display:block;margin-top:18px;font-size:12.5px;color:#9C8A6E;}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--paper);padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;
+    z-index:100;opacity:0;pointer-events:none;transition:all .25s ease;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .skeleton{color:var(--muted);text-align:center;padding:80px 0;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   KHAYAM SAMOSA — storefront + admin portal
+   Data model lives in window.storage (shared=true) so orders
+   placed by any visitor appear live in the admin portal.
+   ============================================================ */
+
+const ADMIN_CODE = "khayam786";
+const ORDERS_KEY = "khayam_orders_v1";
+const PRODUCTS_KEY = "khayam_products_v1";
+
+const DEFAULT_PRODUCTS = [
+  {id:"p1", name:"Aloo Samosa", category:"samosa", price:30, desc:"Crisp-fried pastry, spiced potato filling, folded fresh to order.", active:true, ramzan:false},
+  {id:"p2", name:"Qeema Samosa", category:"samosa", price:40, desc:"Minced meat and green chili — the Khayam counter favourite.", active:true, ramzan:false},
+  {id:"p3", name:"Chicken Tikka", category:"tikka", price:180, desc:"Char-grilled leg piece, marinated overnight, smoked on coal.", active:true, ramzan:false},
+  {id:"p4", name:"Seekh Tikka", category:"tikka", price:160, desc:"Hand-shaped mince skewers, grilled over open flame.", active:true, ramzan:false},
+  {id:"p5", name:"Tandoori Roti", category:"roti", price:15, desc:"Fresh off the tandoor, soft centre, lightly charred edge.", active:true, ramzan:false},
+  {id:"p6", name:"Roghni Naan", category:"roti", price:35, desc:"Enriched dough, sesame-topped, baked to order.", active:true, ramzan:false},
+  {id:"p7", name:"Dahi Bhalla", category:"ramzan", price:60, desc:"Cool yogurt dumplings, tamarind and mint chutney.", active:true, ramzan:true},
+  {id:"p8", name:"Fruit Chaat", category:"ramzan", price:80, desc:"Seasonal fruit tossed in chaat masala, made fresh daily.", active:true, ramzan:true},
+];
+
+const CATS = [
+  {id:"all", label:"All"},
+  {id:"samosa", label:"Samosa"},
+  {id:"tikka", label:"Tikka"},
+  {id:"roti", label:"Roti"},
+  {id:"ramzan", label:"Ramzan Specials"},
+];
+
+let state = {
+  route: "store",          // store, checkout, confirm, track, admin-login, admin-orders, admin-products, admin-reports
+  products: [],
+  orders: [],
+  cart: {},                 // {productId: qty}
+  category: "all",
+  cartOpen: false,
+  mobileNavOpen: false,
+  isAdmin: false,
+  lastOrder: null,
+  statusFilter: "all",
+  loading: true,
+  toast: null,
+  trackPhone: "",
+  trackResults: null,
+  loginError: "",
+};
+
+function uid(prefix){ return prefix + "_" + Math.random().toString(36).slice(2,9); }
+
+function money(n){ return "Rs " + Number(n).toLocaleString("en-PK"); }
+
+function showToast(msg){
+  state.toast = msg;
+  render();
+  setTimeout(()=>{ state.toast = null; render(); }, 2200);
+}
+
+/* ---------------- storage helpers ---------------- */
+async function loadData(){
+  try{
+    const p = await window.storage.get(PRODUCTS_KEY, true);
+    state.products = p ? JSON.parse(p.value) : DEFAULT_PRODUCTS;
+    if(!p){ await window.storage.set(PRODUCTS_KEY, JSON.stringify(DEFAULT_PRODUCTS), true); }
+  }catch(e){ state.products = DEFAULT_PRODUCTS; }
+  try{
+    const o = await window.storage.get(ORDERS_KEY, true);
+    state.orders = o ? JSON.parse(o.value) : [];
+  }catch(e){ state.orders = []; }
+  state.loading = false;
+  render();
+}
+
+async function saveProducts(){
+  try{ await window.storage.set(PRODUCTS_KEY, JSON.stringify(state.products), true); }
+  catch(e){ showToast("Couldn't save — try again."); }
+}
+async function saveOrders(){
+  try{ await window.storage.set(ORDERS_KEY, JSON.stringify(state.orders), true); }
+  catch(e){ showToast("Couldn't save order — try again."); }
+}
+
+/* refresh orders from storage (so admin sees new orders from other visitors) */
+async function refreshOrders(){
+  try{
+    const o = await window.storage.get(ORDERS_KEY, true);
+    state.orders = o ? JSON.parse(o.value) : [];
+    render();
+  }catch(e){}
+}
+
+/* ---------------- cart helpers ---------------- */
+function cartCount(){ return Object.values(state.cart).reduce((a,b)=>a+b,0); }
+function cartLines(){
+  return Object.entries(state.cart).map(([id,qty])=>{
+    const prod = state.products.find(p=>p.id===id);
+    return prod ? {...prod, qty} : null;
+  }).filter(Boolean);
+}
+function cartTotal(){ return cartLines().reduce((sum,l)=>sum+l.price*l.qty,0); }
+function addToCart(id){ state.cart[id] = (state.cart[id]||0)+1; render(); }
+function decFromCart(id){
+  if(!state.cart[id]) return;
+  state.cart[id] -= 1;
+  if(state.cart[id]<=0) delete state.cart[id];
+  render();
+}
+function removeFromCart(id){ delete state.cart[id]; render(); }
+
+/* ---------------- icons ---------------- */
+function iconSVG(name){
+  const icons = {
+    bag: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.8"/></svg>',
+    menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    check: '<svg width="56" height="56" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#35513A"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#F6F1E7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  return icons[name]||"";
+}
+
+function samosaMark(){
+  return `<svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+    <path d="M6 32L20 6l14 26H6Z" fill="var(--turmeric)"/>
+    <path d="M20 6l0 26" stroke="var(--paper)" stroke-width="1.5" opacity=".5"/>
+    <path d="M6 32L20 20L34 32" stroke="var(--paper)" stroke-width="1.5" opacity=".5"/>
+  </svg>`;
+}
+
+/* ================= RENDER ================= */
+function render(){
+  const app = document.getElementById("app");
+  if(state.loading){
+    app.innerHTML = `<div class="skeleton">Loading the counter…</div>`;
+    return;
+  }
+  if(state.route.startsWith("admin")){
+    app.innerHTML = renderAdmin();
+  } else {
+    app.innerHTML = renderCustomer();
+  }
+  bindEvents();
+}
+
+/* ---------------- CUSTOMER SHELL ---------------- */
+function renderCustomer(){
+  const ramzanActive = state.products.some(p=>p.ramzan && p.active);
+  return `
+  <div class="topbar">
+    <div class="wrap topbar-inner">
+      <button class="brand" data-action="go-store">
+        ${samosaMark()}
+        <span>
+          <span class="brand-name">Khayam Samosa</span>
+          <span class="brand-sub">Sargodha • Since the beginning</span>
+        </span>
+      </button>
+      <div class="nav nav-links-desktop">
+        <button class="nav-link ${state.route==='store'?'active':''}" data-action="go-store">Menu</button>
+        <button class="nav-link ${state.route==='track'?'active':''}" data-action="go-track">Track order</button>
+        <button class="cart-btn" data-action="open-cart">
+          ${iconSVG('bag')} Cart ${cartCount()>0?`<span class="cart-badge">${cartCount()}</span>`:''}
+        </button>
+      </div>
+      <button class="hamburger" data-action="toggle-mobile-nav">${iconSVG('menu')}</button>
+    </div>
+    <div class="mobile-menu ${state.mobileNavOpen?'open':''} wrap">
+      <button data-action="go-store">Menu</button>
+      <button data-action="go-track">Track order</button>
+      <button data-action="open-cart">Cart ${cartCount()>0?`(${cartCount()})`:''}</button>
+    </div>
+  </div>
+  ${ramzanActive ? `<div class="ramzan-banner"><b>Ramzan Specials are live</b> — nightly batches, while they last.</div>`:''}
+
+  ${renderRoute()}
+
+  <div class="site-footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <h4>Khayam Samosa</h4>
+          <p>The samosa counter Sargodha grew up on.<br/>Now taking orders online.</p>
+        </div>
+        <div>
+          <h4>Visit</h4>
+          <p>Sargodha, Punjab, Pakistan<br/>Open daily, 3 PM – 11 PM</p>
+        </div>
+        <div>
+          <h4>Order</h4>
+          <p><a href="#" data-action="go-store">Browse the menu</a><br/><a href="#" data-action="go-track">Track an order</a></p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© ${new Date().getFullYear()} Khayam Samosa</span>
+        <button class="admin-link" data-action="go-admin">Staff portal</button>
+      </div>
+    </div>
+  </div>
+
+  ${renderCartDrawer()}
+  ${state.toast?`<div class="toast show">${state.toast}</div>`:''}
+  `;
+}
+
+function renderRoute(){
+  if(state.route==="checkout") return renderCheckout();
+  if(state.route==="confirm") return renderConfirm();
+  if(state.route==="track") return renderTrack();
+  return renderStore();
+}
+
+/* ---------------- STORE / MENU ---------------- */
+function renderStore(){
+  return `
+  <div class="hero wrap">
+    <div class="hero-grid">
+      <div class="reveal">
+        <div class="eyebrow">Sargodha's own since day one</div>
+        <h1>Folded fresh, <em>straight from the tawa.</em></h1>
+        <p>Samosa, tikka aur roti — order from Khayam's counter and skip the line. Same recipe, same hands, now a tap away.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary" data-action="scroll-menu">See the menu</button>
+          <button class="btn btn-ghost" data-action="go-track">Track an order</button>
+        </div>
+      </div>
+      <div class="hero-art reveal">${bigSamosaArt()}</div>
+    </div>
+  </div>
+
+  <div class="section wrap" id="menu-section">
+    <div class="section-head reveal">
+      <div>
+        <h2>Today's menu</h2>
+        <p>Everything made fresh through the day.</p>
+      </div>
+    </div>
+    <div class="cat-tabs">
+      ${CATS.map(c=>`<button class="cat-tab ${state.category===c.id?'active':''}" data-action="set-cat" data-cat="${c.id}">${c.label}</button>`).join("")}
+    </div>
+    ${renderMenuGrid()}
+  </div>
+  `;
+}
+
+function bigSamosaArt(){
+  return `
+  <div class="fresh-chip"><span class="dot"></span> Fresh, made to order</div>
+  <svg width="100%" height="100%" viewBox="0 0 300 300" fill="none">
+    <defs>
+      <radialGradient id="plateGrad" cx="50%" cy="40%" r="65%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="100%" stop-color="#F3E7D3"/>
+      </radialGradient>
+      <linearGradient id="samosaGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#D4B06A"/>
+        <stop offset="100%" stop-color="#8F6B27"/>
+      </linearGradient>
+    </defs>
+    <circle cx="150" cy="150" r="140" fill="url(#plateGrad)"/>
+    <circle cx="150" cy="150" r="140" stroke="var(--ink)" stroke-width="1.5" opacity=".08"/>
+    <g class="steam">
+      <path d="M120 70 Q112 55 122 42" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M150 66 Q142 50 152 36" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M180 70 Q172 55 182 42" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    </g>
+    <path d="M60 222L150 62L240 222H60Z" fill="url(#samosaGrad)" stroke="#8F6B27" stroke-width="1.5"/>
+    <path d="M60 222L150 152L240 222" stroke="var(--paper)" stroke-width="3" opacity=".6"/>
+    <path d="M150 62L150 152" stroke="var(--paper)" stroke-width="3" opacity=".6"/>
+    <g opacity=".5">
+      <circle cx="95" cy="200" r="2.5" fill="#4E1D1D"/>
+      <circle cx="120" cy="205" r="2" fill="#4E1D1D"/>
+      <circle cx="205" cy="198" r="2.5" fill="#4E1D1D"/>
+      <circle cx="180" cy="206" r="2" fill="#4E1D1D"/>
+    </g>
+  </svg>`;
+}
+
+function renderMenuGrid(){
+  const visible = state.products.filter(p=>{
+    if(!p.active) return false;
+    if(state.category==="all") return true;
+    if(state.category==="ramzan") return !!p.ramzan;
+    return p.category===state.category;
+  });
+  if(visible.length===0){
+    return `<div class="empty-note">Nothing here right now — check another category or come back soon.</div>`;
+  }
+  return `<div class="menu-grid">
+    ${visible.map((p,idx)=>`
+      <div class="menu-card reveal" style="transition-delay:${Math.min(idx,6)*45}ms">
+        <span class="cat-chip">${p.ramzan?'Ramzan Special':p.category}</span>
+        <h3>${escapeHtml(p.name)}</h3>
+        <div class="desc">${escapeHtml(p.desc||"")}</div>
+        <div class="row">
+          <span class="price">${money(p.price)}</span>
+          ${state.cart[p.id] ? `
+            <div class="qty-stepper">
+              <button data-action="dec-cart" data-id="${p.id}">−</button>
+              <span>${state.cart[p.id]}</span>
+              <button data-action="inc-cart" data-id="${p.id}">+</button>
+            </div>
+          ` : `<button class="add-btn" data-action="inc-cart" data-id="${p.id}">Add</button>`}
+        </div>
+      </div>
+    `).join("")}
+  </div>`;
+}
+
+/* ---------------- CART DRAWER ---------------- */
+function renderCartDrawer(){
+  const lines = cartLines();
+  return `
+  <div class="overlay ${state.cartOpen?'open':''}" data-action="close-cart"></div>
+  <div class="drawer ${state.cartOpen?'open':''}">
+    <div class="drawer-head">
+      <h3>Your order</h3>
+      <button class="icon-btn" data-action="close-cart">${iconSVG('close')}</button>
+    </div>
+    <div class="drawer-body">
+      ${lines.length===0?`<div class="empty-note">Your cart is empty — add something from the menu.</div>`:
+        lines.map(l=>`
+          <div class="cart-item">
+            <div class="info">
+              <h4>${escapeHtml(l.name)}</h4>
+              <div class="price">${money(l.price)} × ${l.qty} = ${money(l.price*l.qty)}</div>
+              <button class="remove" data-action="remove-cart" data-id="${l.id}">Remove</button>
+            </div>
+            <div class="qty-stepper">
+              <button data-action="dec-cart" data-id="${l.id}">−</button>
+              <span>${l.qty}</span>
+              <button data-action="inc-cart" data-id="${l.id}">+</button>
+            </div>
+          </div>
+        `).join("")
+      }
+    </div>
+    <div class="drawer-foot">
+      <div class="subtotal-row"><span>Subtotal</span><span>${money(cartTotal())}</span></div>
+      <button class="btn btn-primary full-btn" ${lines.length===0?'disabled style="opacity:.5"':''} data-action="go-checkout">Checkout</button>
+    </div>
+  </div>
+  `;
+}
+
+/* ---------------- CHECKOUT ---------------- */
+function renderCheckout(){
+  const lines = cartLines();
+  if(lines.length===0){
+    return `<div class="section wrap"><div class="empty-note">Your cart is empty. <button class="nav-link" data-action="go-store" style="text-decoration:underline;">Back to the menu</button></div></div>`;
+  }
+  return `
+  <div class="section wrap">
+    <div class="section-head"><div><h2>Checkout</h2><p>Tell us where this order is going.</p></div></div>
+    <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:start;" class="checkout-grid">
+      <div class="form-card">
+        <div class="field">
+          <label>Order type</label>
+          <div class="type-toggle">
+            <button type="button" data-action="set-order-type" data-type="delivery" class="${state._orderType!=='pickup'?'active':''}">Delivery</button>
+            <button type="button" data-action="set-order-type" data-type="pickup" class="${state._orderType==='pickup'?'active':''}">Pickup</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Full name</label>
+          <input id="ck-name" type="text" placeholder="e.g. Ahmad Raza" value="${state._ckName||''}"/>
+          ${state._errName?`<div class="error">${state._errName}</div>`:''}
+        </div>
+        <div class="field">
+          <label>Phone number</label>
+          <input id="ck-phone" type="tel" placeholder="03xx-xxxxxxx" value="${state._ckPhone||''}"/>
+          ${state._errPhone?`<div class="error">${state._errPhone}</div>`:''}
+        </div>
+        <div class="field" id="ck-address-field" style="${state._orderType==='pickup'?'display:none':''}">
+          <label>Delivery address</label>
+          <textarea id="ck-address" placeholder="House, street, area, Sargodha">${state._ckAddress||''}</textarea>
+          ${state._errAddress?`<div class="error">${state._errAddress}</div>`:''}
+        </div>
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea id="ck-notes" placeholder="e.g. less spicy, ring the bell">${state._ckNotes||''}</textarea>
+        </div>
+        <button class="btn btn-primary full-btn" data-action="place-order">Place order — ${money(cartTotal())}</button>
+      </div>
+      <div class="form-card">
+        <h3 style="font-size:17px;margin-bottom:14px;">Order summary</h3>
+        ${lines.map(l=>`<div class="order-summary-line"><span>${escapeHtml(l.name)} × ${l.qty}</span><span>${money(l.price*l.qty)}</span></div>`).join("")}
+        <div class="order-summary-line total"><span>Total</span><span>${money(cartTotal())}</span></div>
+      </div>
+    </div>
+  </div>
+  <style>@media (max-width:820px){.checkout-grid{grid-template-columns:1fr !important;}}</style>
+  `;
+}
+
+/* ---------------- CONFIRMATION ---------------- */
+function renderConfirm(){
+  const o = state.lastOrder;
+  if(!o) return `<div class="section wrap"><div class="empty-note">No recent order found.</div></div>`;
+  return `
+  <div class="center-screen wrap">
+    <div class="center-card">
+      ${iconSVG('check')}
+      <h2 style="margin-top:16px;font-size:26px;">Order placed!</h2>
+      <p style="color:var(--muted);margin:8px 0 20px;">We've got it — hang tight while it's prepared.</p>
+      <div class="ticket">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="ticket-num">${o.ticket}</span>
+          <span class="status-pill status-${o.status}">${o.status}</span>
+        </div>
+        <div style="border-top:1.5px dashed var(--line);margin:14px 0;"></div>
+        <div style="text-align:left;font-size:13.5px;color:var(--muted);">
+          ${o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${escapeHtml(i.name)} × ${i.qty}</span><span>${money(i.price*i.qty)}</span></div>`).join("")}
+        </div>
+        <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;font-weight:700;">
+          <span>Total</span><span>${money(o.total)}</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:14px;">Save this ticket number — use "Track order" with your phone number to check status any time.</p>
+      <button class="btn btn-primary" style="margin-top:16px;" data-action="go-store">Back to menu</button>
+    </div>
+  </div>
+  `;
+}
+
+/* ---------------- TRACK ORDER ---------------- */
+function renderTrack(){
+  const results = state.trackResults;
+  return `
+  <div class="section wrap">
+    <div class="section-head"><div><h2>Track your order</h2><p>Enter the phone number you ordered with.</p></div></div>
+    <div class="form-card" style="margin-bottom:24px;">
+      <div class="field">
+        <label>Phone number</label>
+        <input id="track-phone" type="tel" placeholder="03xx-xxxxxxx" value="${state.trackPhone||''}"/>
+      </div>
+      <button class="btn btn-primary" data-action="do-track">Find my orders</button>
+    </div>
+    ${results ? (results.length===0
+      ? `<div class="empty-note">No orders found for that number.</div>`
+      : results.map(o=>`
+        <div class="ticket">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span class="ticket-num">${o.ticket}</span>
+            <span class="status-pill status-${o.status}">${o.status}</span>
+          </div>
+          <div style="border-top:1.5px dashed var(--line);margin:14px 0;"></div>
+          <div style="text-align:left;font-size:13.5px;color:var(--muted);">
+            ${o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${escapeHtml(i.name)} × ${i.qty}</span><span>${money(i.price*i.qty)}</span></div>`).join("")}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;">
+            <span>Total</span><span>${money(o.total)}</span>
+          </div>
+        </div>
+      `).join("")
+    ) : ""}
+  </div>
+  `;
+}
+
+/* ================= ADMIN ================= */
+function renderAdmin(){
+  if(!state.isAdmin) return renderAdminLogin();
+  return `
+  <div class="admin-shell">
+    <div class="admin-sidebar">
+      <button class="brand" data-action="go-store" style="margin-bottom:18px;">
+        ${samosaMark()}
+        <span><span class="brand-name">Khayam</span><span class="brand-sub">Staff portal</span></span>
+      </button>
+      <button class="admin-nav-item ${state.route==='admin-orders'?'active':''}" data-action="admin-nav" data-r="admin-orders">Orders</button>
+      <button class="admin-nav-item ${state.route==='admin-products'?'active':''}" data-action="admin-nav" data-r="admin-products">Products</button>
+      <button class="admin-nav-item ${state.route==='admin-reports'?'active':''}" data-action="admin-nav" data-r="admin-reports">Reports</button>
+    </div>
+    <div class="admin-main">
+      ${state.route==='admin-products' ? renderAdminProducts() : state.route==='admin-reports' ? renderAdminReports() : renderAdminOrders()}
+    </div>
+  </div>
+  ${state.toast?`<div class="toast show">${state.toast}</div>`:''}
+  `;
+}
+
+function renderAdminLogin(){
+  return `
+  <div class="login-shell">
+    <div class="login-card">
+      ${samosaMark()}
+      <h2 style="margin-top:14px;">Staff portal</h2>
+      <p>Enter the access code to manage orders and products.</p>
+      <input id="admin-code" type="password" placeholder="••••••••" />
+      ${state.loginError?`<div class="error" style="color:#E8998C;font-size:12.5px;margin-bottom:10px;">${state.loginError}</div>`:''}
+      <button class="btn btn-primary" data-action="do-admin-login">Enter</button>
+      <button class="back-link" data-action="go-store">← Back to the site</button>
+    </div>
+  </div>
+  `;
+}
+
+function renderAdminOrders(){
+  const filtered = state.orders
+    .slice()
+    .sort((a,b)=>b.createdAt-a.createdAt)
+    .filter(o=>state.statusFilter==='all' || o.status===state.statusFilter);
+  const statuses = ["all","pending","preparing","ready","completed","cancelled"];
+  return `
+  <div class="admin-topline">
+    <h2>Orders</h2>
+    <button class="logout-btn" data-action="admin-logout">Log out</button>
+  </div>
+  <div class="status-filters">
+    ${statuses.map(s=>`<button class="${state.statusFilter===s?'active':''}" data-action="set-status-filter" data-s="${s}">${s[0].toUpperCase()+s.slice(1)}</button>`).join("")}
+  </div>
+  ${filtered.length===0?`<div class="empty-note" style="color:#9C8A6E;">No orders yet — once someone places one, it'll land here.</div>`:
+    filtered.map(o=>`
+      <div class="order-card">
+        <div class="order-card-head">
+          <div>
+            <span class="ticket-num">${o.ticket}</span>
+            <div class="meta">${escapeHtml(o.customer.name)} · ${escapeHtml(o.customer.phone)} · ${o.type}${o.type==='delivery' ? ' — '+escapeHtml(o.customer.address||'') : ''}</div>
+            <div class="meta">${new Date(o.createdAt).toLocaleString()}</div>
+          </div>
+          <span class="status-pill status-${o.status}">${o.status}</span>
+        </div>
+        <div class="order-items-list">
+          ${o.items.map(i=>`<div><span>${escapeHtml(i.name)} × ${i.qty}</span><span>${money(i.price*i.qty)}</span></div>`).join("")}
+        </div>
+        <div style="font-weight:700;color:#EDE3D3;">Total: ${money(o.total)}</div>
+        ${o.notes?`<div class="meta" style="margin-top:6px;">Note: ${escapeHtml(o.notes)}</div>`:''}
+        <div class="order-actions">
+          ${["pending","preparing","ready","completed"].map(s=>`<button class="status-btn ${o.status===s?'active':''}" data-action="set-order-status" data-id="${o.id}" data-s="${s}">${s==='pending'?'Pending':s==='preparing'?'Mark preparing':s==='ready'?'Mark ready':'Mark completed'}</button>`).join("")}
+          <button class="status-btn danger" data-action="set-order-status" data-id="${o.id}" data-s="cancelled">Cancel</button>
+        </div>
+      </div>
+    `).join("")
+  }
+  `;
+}
+
+function renderAdminProducts(){
+  return `
+  <div class="admin-topline">
+    <h2>Products</h2>
+    <button class="logout-btn" data-action="admin-logout">Log out</button>
+  </div>
+  <div class="admin-form-row">
+    <div><label>Name</label><input id="np-name" placeholder="e.g. Chana Chaat"/></div>
+    <div><label>Category</label>
+      <select id="np-cat">
+        <option value="samosa">Samosa</option>
+        <option value="tikka">Tikka</option>
+        <option value="roti">Roti</option>
+        <option value="ramzan">Ramzan special</option>
+      </select>
+    </div>
+    <div><label>Price (Rs)</label><input id="np-price" type="number" placeholder="50"/></div>
+    <div><label>Description</label><input id="np-desc" placeholder="Short description"/></div>
+    <button class="add-product-btn" data-action="add-product">Add item</button>
+  </div>
+  <div class="table-scroll">
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Active</th><th>Ramzan</th><th></th></tr></thead>
+      <tbody>
+        ${state.products.map(p=>`
+          <tr>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${p.category}</td>
+            <td class="mono">${money(p.price)}</td>
+            <td><button class="toggle-pill ${p.active?'toggle-on':'toggle-off'}" data-action="toggle-product-active" data-id="${p.id}">${p.active?'Active':'Hidden'}</button></td>
+            <td><button class="toggle-pill ${p.ramzan?'toggle-on':'toggle-off'}" data-action="toggle-product-ramzan" data-id="${p.id}">${p.ramzan?'Yes':'No'}</button></td>
+            <td><button class="del-btn" data-action="delete-product" data-id="${p.id}">Delete</button></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+
+function renderAdminReports(){
+  const completed = state.orders.filter(o=>o.status==='completed');
+  const revenue = completed.reduce((s,o)=>s+o.total,0);
+  const counts = {pending:0,preparing:0,ready:0,completed:0,cancelled:0};
+  state.orders.forEach(o=>{ counts[o.status] = (counts[o.status]||0)+1; });
+  const itemTally = {};
+  completed.forEach(o=>o.items.forEach(i=>{ itemTally[i.name]=(itemTally[i.name]||0)+i.qty; }));
+  const topItems = Object.entries(itemTally).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  return `
+  <div class="admin-topline">
+    <h2>Reports</h2>
+    <button class="logout-btn" data-action="admin-logout">Log out</button>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="label">Total orders</div><div class="value">${state.orders.length}</div></div>
+    <div class="stat-card"><div class="label">Completed revenue</div><div class="value">${money(revenue)}</div></div>
+    <div class="stat-card"><div class="label">Pending</div><div class="value">${counts.pending}</div></div>
+    <div class="stat-card"><div class="label">In progress</div><div class="value">${counts.preparing+counts.ready}</div></div>
+  </div>
+  <h3 style="color:#fff;font-size:17px;margin-bottom:12px;">Best sellers (completed orders)</h3>
+  ${topItems.length===0?`<div class="empty-note" style="color:#9C8A6E;">No completed orders yet.</div>`:
+    `<div class="table-scroll"><table class="admin-table"><thead><tr><th>Item</th><th>Qty sold</th></tr></thead><tbody>
+      ${topItems.map(([name,qty])=>`<tr><td>${escapeHtml(name)}</td><td class="mono">${qty}</td></tr>`).join("")}
+    </tbody></table></div>`
+  }
+  `;
+}
+
+/* ---------------- utils ---------------- */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ================= EVENT BINDING ================= */
+let revealObserver = null;
+function initReveal(){
+  if(revealObserver) revealObserver.disconnect();
+  revealObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add("in");
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {threshold:0.12, rootMargin:"0px 0px -40px 0px"});
+  document.querySelectorAll(".reveal").forEach(el=>revealObserver.observe(el));
+}
+
+function initTopbarScroll(){
+  const bar = document.querySelector(".topbar");
+  if(!bar) return;
+  const onScroll = ()=>{ bar.classList.toggle("scrolled", window.scrollY>4); };
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+}
+
+function bindEvents(){
+  document.querySelectorAll("[data-action]").forEach(el=>{
+    el.addEventListener("click", onAction);
+  });
+  initReveal();
+  initTopbarScroll();
+}
+
+async function onAction(e){
+  const el = e.currentTarget;
+  const action = el.dataset.action;
+  const id = el.dataset.id;
+
+  switch(action){
+    case "go-store": state.route="store"; state.mobileNavOpen=false; render(); break;
+    case "go-track": state.route="track"; state.mobileNavOpen=false; state.trackResults=null; render(); break;
+    case "go-checkout": state.cartOpen=false; state.route="checkout"; render(); break;
+    case "toggle-mobile-nav": state.mobileNavOpen=!state.mobileNavOpen; render(); break;
+    case "open-cart": state.cartOpen=true; render(); break;
+    case "close-cart": state.cartOpen=false; render(); break;
+    case "scroll-menu":
+      render();
+      setTimeout(()=>{ const s=document.getElementById("menu-section"); if(s) s.scrollIntoView({behavior:"smooth"}); },30);
+      break;
+    case "set-cat": state.category=el.dataset.cat; render(); break;
+    case "inc-cart": addToCart(id); break;
+    case "dec-cart": decFromCart(id); break;
+    case "remove-cart": removeFromCart(id); break;
+    case "set-order-type":
+      state._orderType = el.dataset.type; render(); break;
+    case "place-order": await handlePlaceOrder(); break;
+    case "do-track": await handleTrack(); break;
+
+    case "go-admin": state.route="admin-orders"; render(); break;
+    case "admin-nav": state.route=el.dataset.r; render(); break;
+    case "admin-logout": state.isAdmin=false; state.route="store"; render(); break;
+    case "do-admin-login": handleAdminLogin(); break;
+    case "set-status-filter": state.statusFilter=el.dataset.s; render(); break;
+    case "set-order-status": await handleSetOrderStatus(id, el.dataset.s); break;
+    case "add-product": await handleAddProduct(); break;
+    case "toggle-product-active": await handleToggleProduct(id,"active"); break;
+    case "toggle-product-ramzan": await handleToggleProduct(id,"ramzan"); break;
+    case "delete-product": await handleDeleteProduct(id); break;
+  }
+}
+
+async function handlePlaceOrder(){
+  const name = document.getElementById("ck-name").value.trim();
+  const phone = document.getElementById("ck-phone").value.trim();
+  const address = document.getElementById("ck-address") ? document.getElementById("ck-address").value.trim() : "";
+  const notes = document.getElementById("ck-notes").value.trim();
+  const orderType = state._orderType || "delivery";
+
+  state._errName = state._errPhone = state._errAddress = "";
+  state._ckName=name; state._ckPhone=phone; state._ckAddress=address; state._ckNotes=notes;
+
+  let hasError = false;
+  if(!name){ state._errName="Enter your name so we know who this order is for."; hasError=true; }
+  if(!phone || phone.replace(/\D/g,"").length<10){ state._errPhone="Enter a valid phone number so we can reach you about this order."; hasError=true; }
+  if(orderType==="delivery" && !address){ state._errAddress="Enter a delivery address, or switch to pickup."; hasError=true; }
+  if(hasError){ render(); return; }
+
+  const lines = cartLines();
+  const order = {
+    id: uid("ord"),
+    ticket: "#K" + Math.floor(1000+Math.random()*9000),
+    items: lines.map(l=>({id:l.id,name:l.name,price:l.price,qty:l.qty})),
+    total: cartTotal(),
+    customer: {name, phone, address},
+    type: orderType,
+    notes,
+    status: "pending",
+    createdAt: Date.now(),
+  };
+
+  state.orders.push(order);
+  await saveOrders();
+  state.lastOrder = order;
+  state.cart = {};
+  state._ckName=state._ckPhone=state._ckAddress=state._ckNotes="";
+  state.route = "confirm";
+  render();
+}
+
+async function handleTrack(){
+  const phone = document.getElementById("track-phone").value.trim();
+  state.trackPhone = phone;
+  await refreshOrders();
+  const digits = phone.replace(/\D/g,"");
+  state.trackResults = state.orders
+    .filter(o=>o.customer.phone.replace(/\D/g,"")===digits && digits.length>0)
+    .sort((a,b)=>b.createdAt-a.createdAt);
+  render();
+}
+
+function handleAdminLogin(){
+  const val = document.getElementById("admin-code").value;
+  if(val===ADMIN_CODE){
+    state.isAdmin=true; state.loginError=""; state.route="admin-orders";
+    refreshOrders();
+  } else {
+    state.loginError="That code isn't right — try again.";
+  }
+  render();
+}
+
+async function handleSetOrderStatus(id, status){
+  const o = state.orders.find(o=>o.id===id);
+  if(o){ o.status = status; await saveOrders(); showToast("Order "+o.ticket+" marked "+status+"."); }
+  render();
+}
+
+async function handleAddProduct(){
+  const name = document.getElementById("np-name").value.trim();
+  const category = document.getElementById("np-cat").value;
+  const price = parseFloat(document.getElementById("np-price").value);
+  const desc = document.getElementById("np-desc").value.trim();
+  if(!name || !price || price<=0){ showToast("Enter a name and a valid price first."); return; }
+  state.products.push({id:uid("p"), name, category, price, desc, active:true, ramzan: category==="ramzan"});
+  await saveProducts();
+  showToast(name+" added to the menu.");
+  render();
+}
+
+async function handleToggleProduct(id, field){
+  const p = state.products.find(p=>p.id===id);
+  if(p){ p[field] = !p[field]; await saveProducts(); }
+  render();
+}
+
+async function handleDeleteProduct(id){
+  state.products = state.products.filter(p=>p.id!==id);
+  await saveProducts();
+  render();
+}
+
+/* periodic refresh of orders while admin is viewing, so new orders appear live */
+setInterval(()=>{ if(state.isAdmin && !state.loading) refreshOrders(); }, 8000);
+
+loadData();
+</script>
+</body>
+</html>
+
