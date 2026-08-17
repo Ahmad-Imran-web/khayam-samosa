@@ -393,6 +393,109 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .skeleton{color:var(--muted);text-align:center;padding:80px 0;}
+
+  /* ============================================================
+     RESPONSIVE & PRODUCTION HARDENING LAYER
+     (Additive only — no colors, fonts, or layout style changed;
+     these rules fix overflow, spacing, and touch-target issues
+     across the full device range without altering the design.)
+     ============================================================ */
+  html,body{overflow-x:hidden;width:100%;}
+  img,svg{max-width:100%;height:auto;}
+  input,textarea,select,button{max-width:100%;}
+  .menu-card h3,.menu-card .desc,.cart-item h4,.order-card,.admin-table td,
+  .ticket,.form-card,.stat-card,.login-card{word-break:break-word;overflow-wrap:break-word;}
+  table{max-width:100%;}
+
+  /* fluid vertical rhythm so small screens don't feel cramped or over-padded */
+  .hero{padding:clamp(36px,8vw,64px) 0 clamp(26px,5vw,40px);}
+  .section{padding:clamp(26px,5vw,40px) 0;}
+
+  /* larger, comfortable tap targets on touch devices only — visual size on
+     mouse/desktop is untouched, this only widens the hit area for touch */
+  @media (pointer:coarse){
+    .qty-stepper button{width:36px;height:36px;}
+    .icon-btn{width:44px;height:44px;}
+    .hamburger{width:44px;height:44px;}
+    .cart-btn,.add-btn,.btn,.status-btn,.toggle-pill,.del-btn,.admin-nav-item,.nav-link,.cat-tab{min-height:40px;}
+    .btn{min-height:46px;}
+  }
+
+  /* prevent iOS Safari auto-zoom on inputs under 16px */
+  @media (max-width:600px){
+    .field input,.field textarea,.field select,
+    .login-card input,.admin-table input,.admin-table select{font-size:16px;}
+  }
+
+  /* ---- 320–374px small phones ---- */
+  @media (max-width:374px){
+    .wrap{padding:0 12px;}
+    .hero h1{font-size:clamp(27px,8.2vw,32px);}
+    .hero p{font-size:15px;}
+    .brand-name{font-size:17px;}
+    .brand-sub{font-size:9px;letter-spacing:.08em;}
+    .fresh-chip{padding:7px 11px;font-size:10.5px;top:4%;right:0;}
+    .hero-art{max-width:210px;}
+    .form-card,.ticket{padding:16px;}
+    .drawer-head,.drawer-body,.drawer-foot{padding-left:14px;padding-right:14px;}
+    .btn{padding:12px 18px;font-size:14px;}
+  }
+
+  /* ---- 375–479px standard phones ---- */
+  @media (min-width:375px) and (max-width:479px){
+    .hero-art{max-width:250px;}
+  }
+
+  /* ---- 480–899px large phones through small tablets ---- */
+  @media (min-width:480px) and (max-width:899px){
+    .menu-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ---- 768–1023px tablets (iPad portrait / Air) ---- */
+  @media (min-width:768px) and (max-width:1023px){
+    .hero-grid{grid-template-columns:1fr;}
+    .hero-art{max-width:300px;}
+    .checkout-grid{grid-template-columns:1fr !important;}
+    .admin-main{padding:24px;}
+  }
+
+  /* ---- Admin forms stack cleanly on phones/small tablets ---- */
+  @media (max-width:600px){
+    .admin-form-row{grid-template-columns:1fr !important;}
+    .add-product-btn{width:100%;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ---- Large desktop / high-resolution monitors (1920–3840px) ----
+     Keep the reading-width layout centered rather than stretching
+     text edge-to-edge, which is the correct responsive behavior. */
+  @media (min-width:1920px){
+    .wrap{max-width:1280px;}
+  }
+  @media (min-width:2560px){
+    .wrap{max-width:1440px;}
+    body{font-size:17px;}
+  }
+
+  /* ---- Short/landscape phones — trim vertical padding so key
+     actions stay reachable without excess scrolling ---- */
+  @media (max-height:430px) and (orientation:landscape){
+    .hero{padding-top:18px;padding-bottom:16px;}
+    .drawer-head,.drawer-foot{padding-top:12px;padding-bottom:12px;}
+    .center-screen{padding:28px 0;}
+  }
+
+  .table-scroll{-webkit-overflow-scrolling:touch;}
+
+  /* connection status banner (data reliability) */
+  .offline-banner{
+    background:var(--brick-deep);color:#F6F1E7;text-align:center;font-size:13px;font-weight:600;
+    padding:8px 14px;position:relative;z-index:50;
+  }
+
+  /* disabled/saving state for buttons during async writes */
+  button[disabled]{opacity:.6;cursor:not-allowed;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -444,47 +547,96 @@ let state = {
   trackPhone: "",
   trackResults: null,
   loginError: "",
+  isOnline: (typeof navigator!=="undefined" ? navigator.onLine : true),
+  isSubmittingOrder: false,
+  isSavingProduct: false,
+  savingOrderId: null,
 };
 
 function uid(prefix){ return prefix + "_" + Math.random().toString(36).slice(2,9); }
 
-function money(n){ return "Rs " + Number(n).toLocaleString("en-PK"); }
+function money(n){ return "Rs " + Number(n||0).toLocaleString("en-PK"); }
 
 function showToast(msg){
   state.toast = msg;
   render();
-  setTimeout(()=>{ state.toast = null; render(); }, 2200);
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>{ state.toast = null; render(); }, 2200);
 }
 
 /* ---------------- storage helpers ---------------- */
+function safeParseArray(raw, fallback){
+  if(!raw) return fallback;
+  try{
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : fallback;
+  }catch(e){ return fallback; }
+}
+
 async function loadData(){
   try{
     const p = await window.storage.get(PRODUCTS_KEY, true);
-    state.products = p ? JSON.parse(p.value) : DEFAULT_PRODUCTS;
+    state.products = p ? safeParseArray(p.value, DEFAULT_PRODUCTS) : DEFAULT_PRODUCTS;
     if(!p){ await window.storage.set(PRODUCTS_KEY, JSON.stringify(DEFAULT_PRODUCTS), true); }
   }catch(e){ state.products = DEFAULT_PRODUCTS; }
   try{
     const o = await window.storage.get(ORDERS_KEY, true);
-    state.orders = o ? JSON.parse(o.value) : [];
+    state.orders = o ? safeParseArray(o.value, []) : [];
   }catch(e){ state.orders = []; }
   state.loading = false;
   render();
 }
 
-async function saveProducts(){
-  try{ await window.storage.set(PRODUCTS_KEY, JSON.stringify(state.products), true); }
-  catch(e){ showToast("Couldn't save — try again."); }
-}
-async function saveOrders(){
-  try{ await window.storage.set(ORDERS_KEY, JSON.stringify(state.orders), true); }
-  catch(e){ showToast("Couldn't save order — try again."); }
+/* Refetch-then-mutate-then-save: always works off the latest committed
+   data rather than a possibly-stale in-memory copy, so two people using
+   the admin portal at the same time don't silently overwrite each other. */
+async function safeMutateOrders(mutatorFn){
+  let latest;
+  try{
+    const o = await window.storage.get(ORDERS_KEY, true);
+    latest = o ? safeParseArray(o.value, state.orders) : state.orders;
+  }catch(e){ latest = state.orders; }
+  const updated = mutatorFn(latest);
+  state.orders = updated;
+  try{
+    await window.storage.set(ORDERS_KEY, JSON.stringify(updated), true);
+    return true;
+  }catch(e){
+    showToast("Couldn't save — check your connection and try again.");
+    return false;
+  }
 }
 
-/* refresh orders from storage (so admin sees new orders from other visitors) */
+async function safeMutateProducts(mutatorFn){
+  let latest;
+  try{
+    const p = await window.storage.get(PRODUCTS_KEY, true);
+    latest = p ? safeParseArray(p.value, state.products) : state.products;
+  }catch(e){ latest = state.products; }
+  const updated = mutatorFn(latest);
+  state.products = updated;
+  try{
+    await window.storage.set(PRODUCTS_KEY, JSON.stringify(updated), true);
+    return true;
+  }catch(e){
+    showToast("Couldn't save — check your connection and try again.");
+    return false;
+  }
+}
+
+/* refresh from storage (so admin sees new orders, and customers see
+   menu/price changes, without needing a manual page reload) */
 async function refreshOrders(){
   try{
     const o = await window.storage.get(ORDERS_KEY, true);
-    state.orders = o ? JSON.parse(o.value) : [];
+    state.orders = o ? safeParseArray(o.value, state.orders) : state.orders;
+    render();
+  }catch(e){}
+}
+async function refreshProducts(){
+  try{
+    const p = await window.storage.get(PRODUCTS_KEY, true);
+    state.products = p ? safeParseArray(p.value, state.products) : state.products;
     render();
   }catch(e){}
 }
@@ -545,6 +697,7 @@ function render(){
 function renderCustomer(){
   const ramzanActive = state.products.some(p=>p.ramzan && p.active);
   return `
+  ${!state.isOnline?`<div class="offline-banner">You're offline — orders can't be placed until your connection is back.</div>`:''}
   <div class="topbar">
     <div class="wrap topbar-inner">
       <button class="brand" data-action="go-store">
@@ -778,7 +931,7 @@ function renderCheckout(){
           <label>Notes (optional)</label>
           <textarea id="ck-notes" placeholder="e.g. less spicy, ring the bell">${state._ckNotes||''}</textarea>
         </div>
-        <button class="btn btn-primary full-btn" data-action="place-order">Place order — ${money(cartTotal())}</button>
+        <button class="btn btn-primary full-btn" data-action="place-order" ${state.isSubmittingOrder?'disabled':''}>${state.isSubmittingOrder?'Placing order…':'Place order — '+money(cartTotal())}</button>
       </div>
       <div class="form-card">
         <h3 style="font-size:17px;margin-bottom:14px;">Order summary</h3>
@@ -860,6 +1013,7 @@ function renderTrack(){
 function renderAdmin(){
   if(!state.isAdmin) return renderAdminLogin();
   return `
+  ${!state.isOnline?`<div class="offline-banner">You're offline — changes won't save until your connection is back.</div>`:''}
   <div class="admin-shell">
     <div class="admin-sidebar">
       <button class="brand" data-action="go-store" style="margin-bottom:18px;">
@@ -925,8 +1079,8 @@ function renderAdminOrders(){
         <div style="font-weight:700;color:#EDE3D3;">Total: ${money(o.total)}</div>
         ${o.notes?`<div class="meta" style="margin-top:6px;">Note: ${escapeHtml(o.notes)}</div>`:''}
         <div class="order-actions">
-          ${["pending","preparing","ready","completed"].map(s=>`<button class="status-btn ${o.status===s?'active':''}" data-action="set-order-status" data-id="${o.id}" data-s="${s}">${s==='pending'?'Pending':s==='preparing'?'Mark preparing':s==='ready'?'Mark ready':'Mark completed'}</button>`).join("")}
-          <button class="status-btn danger" data-action="set-order-status" data-id="${o.id}" data-s="cancelled">Cancel</button>
+          ${["pending","preparing","ready","completed"].map(s=>`<button class="status-btn ${o.status===s?'active':''}" data-action="set-order-status" data-id="${o.id}" data-s="${s}" ${state.savingOrderId===o.id?'disabled':''}>${s==='pending'?'Pending':s==='preparing'?'Mark preparing':s==='ready'?'Mark ready':'Mark completed'}</button>`).join("")}
+          <button class="status-btn danger" data-action="set-order-status" data-id="${o.id}" data-s="cancelled" ${state.savingOrderId===o.id?'disabled':''}>Cancel</button>
         </div>
       </div>
     `).join("")
@@ -952,7 +1106,7 @@ function renderAdminProducts(){
     </div>
     <div><label>Price (Rs)</label><input id="np-price" type="number" placeholder="50"/></div>
     <div><label>Description</label><input id="np-desc" placeholder="Short description"/></div>
-    <button class="add-product-btn" data-action="add-product">Add item</button>
+    <button class="add-product-btn" data-action="add-product" ${state.isSavingProduct?'disabled':''}>${state.isSavingProduct?'Adding…':'Add item'}</button>
   </div>
   <div class="table-scroll">
     <table class="admin-table">
@@ -1077,22 +1231,29 @@ async function onAction(e){
 }
 
 async function handlePlaceOrder(){
+  if(state.isSubmittingOrder) return;
   const name = document.getElementById("ck-name").value.trim();
   const phone = document.getElementById("ck-phone").value.trim();
   const address = document.getElementById("ck-address") ? document.getElementById("ck-address").value.trim() : "";
-  const notes = document.getElementById("ck-notes").value.trim();
+  const notes = document.getElementById("ck-notes").value.trim().slice(0,300);
   const orderType = state._orderType || "delivery";
 
   state._errName = state._errPhone = state._errAddress = "";
   state._ckName=name; state._ckPhone=phone; state._ckAddress=address; state._ckNotes=notes;
 
   let hasError = false;
-  if(!name){ state._errName="Enter your name so we know who this order is for."; hasError=true; }
-  if(!phone || phone.replace(/\D/g,"").length<10){ state._errPhone="Enter a valid phone number so we can reach you about this order."; hasError=true; }
+  if(!name || name.length<2){ state._errName="Enter your name so we know who this order is for."; hasError=true; }
+  if(name.length>60){ state._errName="That name looks too long — please shorten it."; hasError=true; }
+  const phoneDigits = phone.replace(/\D/g,"");
+  if(!phone || phoneDigits.length<10 || phoneDigits.length>13){ state._errPhone="Enter a valid phone number so we can reach you about this order."; hasError=true; }
   if(orderType==="delivery" && !address){ state._errAddress="Enter a delivery address, or switch to pickup."; hasError=true; }
+  const lines = cartLines();
+  if(lines.length===0){ showToast("Your cart is empty."); hasError=true; }
   if(hasError){ render(); return; }
 
-  const lines = cartLines();
+  state.isSubmittingOrder = true;
+  render();
+
   const order = {
     id: uid("ord"),
     ticket: "#K" + Math.floor(1000+Math.random()*9000),
@@ -1105,8 +1266,11 @@ async function handlePlaceOrder(){
     createdAt: Date.now(),
   };
 
-  state.orders.push(order);
-  await saveOrders();
+  const ok = await safeMutateOrders(list => [...list, order]);
+  state.isSubmittingOrder = false;
+
+  if(!ok){ render(); return; }
+
   state.lastOrder = order;
   state.cart = {};
   state._ckName=state._ckPhone=state._ckAddress=state._ckNotes="";
@@ -1116,6 +1280,7 @@ async function handlePlaceOrder(){
 
 async function handleTrack(){
   const phone = document.getElementById("track-phone").value.trim();
+  if(!phone){ showToast("Enter the phone number you ordered with."); return; }
   state.trackPhone = phone;
   await refreshOrders();
   const digits = phone.replace(/\D/g,"");
@@ -1130,6 +1295,7 @@ function handleAdminLogin(){
   if(val===ADMIN_CODE){
     state.isAdmin=true; state.loginError=""; state.route="admin-orders";
     refreshOrders();
+    refreshProducts();
   } else {
     state.loginError="That code isn't right — try again.";
   }
@@ -1137,38 +1303,75 @@ function handleAdminLogin(){
 }
 
 async function handleSetOrderStatus(id, status){
-  const o = state.orders.find(o=>o.id===id);
-  if(o){ o.status = status; await saveOrders(); showToast("Order "+o.ticket+" marked "+status+"."); }
+  if(state.savingOrderId) return;
+  state.savingOrderId = id;
+  render();
+  let updatedTicket = "";
+  const ok = await safeMutateOrders(list => list.map(o=>{
+    if(o.id===id){ updatedTicket = o.ticket; return {...o, status}; }
+    return o;
+  }));
+  state.savingOrderId = null;
+  if(ok) showToast("Order "+updatedTicket+" marked "+status+".");
   render();
 }
 
 async function handleAddProduct(){
-  const name = document.getElementById("np-name").value.trim();
-  const category = document.getElementById("np-cat").value;
-  const price = parseFloat(document.getElementById("np-price").value);
-  const desc = document.getElementById("np-desc").value.trim();
-  if(!name || !price || price<=0){ showToast("Enter a name and a valid price first."); return; }
-  state.products.push({id:uid("p"), name, category, price, desc, active:true, ramzan: category==="ramzan"});
-  await saveProducts();
-  showToast(name+" added to the menu.");
+  if(state.isSavingProduct) return;
+  const nameEl = document.getElementById("np-name");
+  const catEl = document.getElementById("np-cat");
+  const priceEl = document.getElementById("np-price");
+  const descEl = document.getElementById("np-desc");
+  const name = nameEl.value.trim();
+  const category = catEl.value;
+  const price = parseFloat(priceEl.value);
+  const desc = descEl.value.trim().slice(0,160);
+
+  if(!name || name.length<2){ showToast("Enter a product name (at least 2 characters)."); return; }
+  if(name.length>60){ showToast("That name looks too long — please shorten it."); return; }
+  if(!priceEl.value || isNaN(price) || price<=0){ showToast("Enter a valid price greater than 0."); return; }
+  if(price>100000){ showToast("That price looks too high — double check it."); return; }
+  const dupe = state.products.some(p=>p.name.trim().toLowerCase()===name.toLowerCase());
+  if(dupe){ showToast("A product with that name already exists."); return; }
+
+  state.isSavingProduct = true;
+  render();
+  const newProduct = {id:uid("p"), name, category, price, desc, active:true, ramzan: category==="ramzan"};
+  const ok = await safeMutateProducts(list => [...list, newProduct]);
+  state.isSavingProduct = false;
+  if(ok){
+    showToast(name+" added to the menu.");
+    nameEl.value=""; priceEl.value=""; descEl.value="";
+  }
   render();
 }
 
 async function handleToggleProduct(id, field){
-  const p = state.products.find(p=>p.id===id);
-  if(p){ p[field] = !p[field]; await saveProducts(); }
+  await safeMutateProducts(list => list.map(p => p.id===id ? {...p, [field]: !p[field]} : p));
   render();
 }
 
 async function handleDeleteProduct(id){
-  state.products = state.products.filter(p=>p.id!==id);
-  await saveProducts();
+  await safeMutateProducts(list => list.filter(p=>p.id!==id));
   render();
 }
 
-/* periodic refresh of orders while admin is viewing, so new orders appear live */
-setInterval(()=>{ if(state.isAdmin && !state.loading) refreshOrders(); }, 8000);
+/* ---------------- connectivity ---------------- */
+function initConnectivity(){
+  window.addEventListener("online", ()=>{ state.isOnline=true; render(); });
+  window.addEventListener("offline", ()=>{ state.isOnline=false; render(); });
+}
 
+/* periodic background refresh: keeps the admin portal's orders live,
+   and keeps customers' menu/prices in sync with admin edits, without
+   requiring a manual reload */
+setInterval(()=>{
+  if(state.loading) return;
+  if(state.isAdmin){ refreshOrders(); refreshProducts(); }
+  else if(state.route==="store" || state.route==="checkout"){ refreshProducts(); }
+}, 9000);
+
+initConnectivity();
 loadData();
 </script>
 </body>
